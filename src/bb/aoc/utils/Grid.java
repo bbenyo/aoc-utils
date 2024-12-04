@@ -19,12 +19,28 @@ public class Grid {
 		rows.add(r);
 	}
 	
+	public void addRow(char[] row) {
+		rows.add(row);
+	}
+	
+	public int getRowCount() {
+		return rows.size();
+	}
+	
+	public int getColumnCount(int r) {
+		if (r < 0 || rows.size() <= r) {
+			return 0;
+		}
+		char[] row = rows.get(r);
+		return row.length;
+	}
+	
 	public Optional<Character> get(int x, int y) {
-		if (rows.size() <= y) {
+		if (y < 0 || rows.size() <= y) {
 			return Optional.empty();
 		}
 		char[] row = rows.get(y);
-		if (row.length <= x) {
+		if (x < 0 || row.length <= x) {
 			return Optional.empty();
 		}
 		return Optional.of(row[x]);
@@ -33,6 +49,17 @@ public class Grid {
 	// Get the char at the cursor
 	public Optional<Character> get() {
 		return get(cursor.x, cursor.y);
+	}
+	
+	public Optional<Character> get(Location l) {
+		return get(l.x, l.y);
+	}
+	
+	public Optional<Character> get(Optional<Location> l) {
+		if (l.isEmpty()) {
+			return Optional.empty();
+		}
+		return get(l.get());
 	}
 	
 	// Move cursor right+down, return the true if the next cursor location is good 
@@ -189,4 +216,34 @@ public class Grid {
 		return nbrs;
 	}
 	
+	/** Get a sub-grid centered a loc with offset w (x-y to x+w)
+	 *  Offset of 1 gets you a 3x3 grid (x-1 to x+1)
+	 *   Offset of 2 gets you a 5x5 grid, etc.
+	 *  Return empty if we can't make a grid at this location because we go off edge
+	 **/ 
+	public Optional<Grid> createSubGrid(Location loc, int offset) {
+		if (get(loc).isEmpty()) {
+			// loc is off the grid!
+			return Optional.empty();
+		}
+		Location c2 = new Location(loc);
+		c2.moveUp(offset);
+		c2.moveLeft(offset);
+		Grid subGrid = new Grid();
+		int sgSize = (offset * 2) + 1;
+		
+		for (int y=c2.y; y<c2.y + sgSize; ++y) {
+			char[] row = new char[sgSize];
+			for (int x=c2.x; x<c2.x + sgSize; ++x) {
+				Optional<Character> nextC = get(x, y);
+				if (nextC.isEmpty()) {
+					// Off grid!
+					return Optional.empty();
+				}
+				row[x] = nextC.get();
+			}
+			subGrid.addRow(row);			
+		}
+		return Optional.of(subGrid);
+	}
 }

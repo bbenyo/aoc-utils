@@ -11,6 +11,11 @@ public class Location  {
 		this.y = y;
 	}
 	
+	public Location(Location l) {
+		this.x = l.x;
+		this.y = l.y;
+	}
+	
 	public Location(String xy) {
 		String[] coords = xy.split(",");
 		if (coords.length != 2) {
