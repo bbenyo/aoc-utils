@@ -62,6 +62,20 @@ public class Grid {
 		return get(l.get());
 	}
 	
+	public void set(int x, int y, char c) {
+		if (y < 0 || rows.size() <= y) {
+			return;
+		}
+		char[] row = rows.get(y);
+		if (x < 0 || row.length <= x) {
+			return;
+		}
+		row[x] = c;
+	}
+	
+	public void set(Location l, char c) {
+		set(l.x, l.y, c);
+	}
 	// Move cursor right+down, return the true if the next cursor location is good 
 	//    or empty if at the end of the grid
 	public boolean nextRightDown() {
@@ -245,5 +259,41 @@ public class Grid {
 			subGrid.addRow(row);			
 		}
 		return Optional.of(subGrid);
+	}
+	
+	public int count(String cs) {
+		int count = 0;
+		for (int y = 0; y<rows.size(); ++y) {
+			char[] row = rows.get(y);
+			for (char cell : row) {
+				if (cs.indexOf(cell) > -1) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
+	
+	public void reset(String cs, char base) {
+		for (int y = 0; y<rows.size(); ++y) {
+			char[] row = rows.get(y);
+			for (int x = 0; x<row.length; ++x) {
+				char cell = row[x];
+				if (cs.indexOf(cell) > -1) {
+					row[x] = '.';
+				}
+			}
+		}
+	}
+	
+	public String print() {
+		StringBuffer sb = new StringBuffer();
+		sb.append(System.lineSeparator());
+		for (int y = 0; y<rows.size(); ++y) {
+			char[] row = rows.get(y);
+			sb.append(row);
+			sb.append(System.lineSeparator());
+		}
+		return sb.toString();
 	}
 }

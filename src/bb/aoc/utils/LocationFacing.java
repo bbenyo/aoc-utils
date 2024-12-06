@@ -3,11 +3,8 @@ package bb.aoc.utils;
 import java.util.Objects;
 
 public class LocationFacing extends Location {
-	
-	public enum Direction {UP, DOWN, LEFT, RIGHT};
-	
+		
 	protected Direction facing;
-
 
 	public LocationFacing(int x, int y) {
 		super(x, y);
@@ -43,11 +40,23 @@ public class LocationFacing extends Location {
 		}
 	}
 	
+	public void turnRight() {
+		switch (facing) {
+		case UP: facing = Direction.RIGHT; break;
+		case DOWN: facing = Direction.LEFT; break;
+		case LEFT: facing = Direction.UP; break;
+		case RIGHT: facing = Direction.DOWN; break;
+		default:
+			break;
+		}
+	}
+	
 	// Move forward 1 step.  If we hit the top/left/bottom/right rows:
 	//   If wrap is true, we wrap around, if false, we're stuck
-	public void forward(Location topLeft, Location bottomRight, boolean wrap) {
+	public boolean forward(Location topLeft, Location bottomRight, boolean wrap) {
 		int nx = x;
 		int ny = y;
+		boolean fail = false;
 		switch (facing) {
 		case DOWN:
 			ny ++; 
@@ -56,6 +65,7 @@ public class LocationFacing extends Location {
 					ny = topLeft.getY();
 				} else {
 					ny = y;
+					fail = true;
 				}
 			}
 			break;
@@ -66,6 +76,7 @@ public class LocationFacing extends Location {
 					nx = bottomRight.getX();
 				} else {
 					nx = x;
+					fail = true;
 				}
 			}
 			break;
@@ -76,6 +87,7 @@ public class LocationFacing extends Location {
 					nx = topLeft.getX();
 				} else {
 					nx = x;
+					fail = true;
 				}
 			}
 			break;
@@ -86,6 +98,7 @@ public class LocationFacing extends Location {
 					ny = bottomRight.getY();
 				} else {
 					ny = y;
+					fail = true;
 				}
 			}
 			break;
@@ -94,6 +107,7 @@ public class LocationFacing extends Location {
 		}
 		setX(nx);
 		setY(ny);
+		return !fail;
 	}
 
 	@Override
