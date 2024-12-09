@@ -157,6 +157,14 @@ public class Utilities {
 		}
 	}
 	
+	static public Long parseLongOrNull(String val) {
+		try {
+			return Long.parseLong(val);
+		} catch (NumberFormatException ex) {
+			return null;
+		}
+	}
+	
 	static public int sumIntsBetween(int start, int end) {
 		return (start + end) * (end - start + 1) / 2;
 	}
