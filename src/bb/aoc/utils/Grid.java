@@ -216,8 +216,15 @@ public class Grid {
 
 	// Find all neighboring locations with value = c
 	public List<LocationDirection> findNeighbors(char c, Location loc) {
+		return findNeighbors(c, loc, true);
+	}
+	
+	public List<LocationDirection> findNeighbors(char c, Location loc, boolean diagonal) {
 		List<LocationDirection> nbrs = new ArrayList<>();
 		for (Direction d : Direction.values()) {
+			if (Direction.isDiagonal(d) && !diagonal) {
+				continue;
+			}
 			Optional<Location> nbr = getLocAt(loc, d);
 			if (nbr.isPresent()) {
 				Location nLoc = nbr.get();
