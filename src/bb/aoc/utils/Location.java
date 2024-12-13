@@ -41,6 +41,48 @@ public class Location  {
 		this.x = x;
 	}
 	
+	public Location moveTo(Direction d, int steps) {
+		Location l = new Location(this);
+		l.move(d, steps);
+		return l;
+	}
+	
+	public void move(Direction d, int steps) {
+		switch(d) {
+		case DOWN:
+			moveDown(steps);
+			break;
+		case DOWN_LEFT:
+			moveDown(steps);
+			moveLeft(steps);
+			break;
+		case DOWN_RIGHT:
+			moveDown(steps);
+			moveRight(steps);
+			break;
+		case LEFT:
+			moveLeft(steps);
+			break;
+		case RIGHT:
+			moveRight(steps);
+			break;
+		case UP:
+			moveUp(steps);
+			break;
+		case UP_LEFT:
+			moveUp(steps);
+			moveLeft(steps);
+			break;
+		case UP_RIGHT:
+			moveUp(steps);
+			moveRight(steps);
+			break;
+		default:
+			break;
+		
+		}
+	}
+	
 	public void moveUp(int steps) {
 		y = y - steps;
 	}
