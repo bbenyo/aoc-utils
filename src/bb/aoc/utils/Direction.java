@@ -1,5 +1,7 @@
 package bb.aoc.utils;
 
+import java.util.Optional;
+
 public enum Direction {
 	LEFT, RIGHT, UP, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT;
 	
@@ -85,5 +87,16 @@ public enum Direction {
 			break;		
 		}
 		return d;
+	}
+	
+	public static Optional<Direction> fromChar(char c) {
+		switch(c) {
+		case '>' : return Optional.of(RIGHT);
+		case '<' : return Optional.of(LEFT);
+		case 'v' : return Optional.of(DOWN);
+		case '^' : return Optional.of(UP);
+		default:
+			return Optional.empty();
+		}
 	}
 }

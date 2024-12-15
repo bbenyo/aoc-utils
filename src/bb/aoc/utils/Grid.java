@@ -14,6 +14,10 @@ public class Grid {
 		cursor = new Location(0,0);
 	}
 	
+	public void setCursor(Location l) {
+		cursor = l;
+	}
+	
 	public void initialize(int x, int y, char def) {
 		for (int i=0; i<y; ++i) {
 			char[] row = new char[x];
