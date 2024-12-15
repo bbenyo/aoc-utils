@@ -14,6 +14,16 @@ public class Grid {
 		cursor = new Location(0,0);
 	}
 	
+	public void initialize(int x, int y, char def) {
+		for (int i=0; i<y; ++i) {
+			char[] row = new char[x];
+			for (int j=0; j<x; ++j) {
+				row[j] = def;
+			}
+			addRow(row);
+		}
+	}
+	
 	public void parseRow(String row) {
 		char[] r = row.trim().toCharArray();
 		rows.add(r);
