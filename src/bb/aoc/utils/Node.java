@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -17,13 +19,14 @@ import org.apache.log4j.Logger;
  * @author bbenyo
  *
  */
-public class Node extends Location {
+public class Node extends Location implements Comparable<Node> {
 	static private Logger logger = Logger.getLogger(Node.class.getName());
 	
-	String label;
+	protected String label;
 	
 	protected int gScore = -1;
 	protected int hScore = 0;
+	protected int localCost = 1;
 	
 	protected Set<Node> neighbors;
 	Node backPath;
@@ -33,6 +36,14 @@ public class Node extends Location {
 		this.label = l1.toString();
 		neighbors = new HashSet<Node>();
 		gScore = getWorstScore(l1);
+	}
+	
+	public String getLabel() {
+		return label;
+	}
+	
+	public Location toLocation() {
+		return new Location(this.getX(), this.getY());
 	}
 			
 	public void setNeighbors(Set<Node> neighbors) {
@@ -77,12 +88,21 @@ public class Node extends Location {
 	}
 	
 	// The value/risk/cost of going to location cur
-	public int getCost(Location cur) {
-		return 1;
+	public int getCost(Node cur) {
+		return cur.localCost;
 	}
 	
 	public int getF() {
 		return gScore + hScore;
+	}
+	
+	public int getG() {
+		return gScore;
+	}
+	
+	@Override
+	public String toString() {
+		return super.toString()+" g: "+gScore;
 	}
 
 	public int getBackPathLength() {
@@ -156,67 +176,133 @@ public class Node extends Location {
 	}
 		
 	// Bottom right
-	public boolean isEnd(Node loc) {
-		if ((loc.getY() == getGridSizeY() - 1) &&
-			(loc.getX() == getGridSizeX() - 1)) {
+	public boolean isEnd() {
+		if ((getY() == getGridSizeY() - 1) &&
+			(getX() == getGridSizeX() - 1)) {
 			return true;
 		}
 		return false;
 	}
 	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(gScore, hScore, label, localCost);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Node other = (Node) obj;
+		return gScore == other.gScore && hScore == other.hScore && Objects.equals(label, other.label)
+				&& localCost == other.localCost;
+	}
+
+	@Override
+	public int compareTo(Node o2) {
+		int f1 = getF();
+		int f2 = o2.getF();
+		if (f1 < f2) {
+			return -1;
+		} else if (f1 == f2) {
+			return 0;
+		}
+		return 1;
+	}
+	
+	public String printBackPath() {
+		List<Node> path = getBackPath();
+		StringBuffer sb = new StringBuffer(this.toString());
+		sb.append("\n <- ");
+		for (Node n : path) {
+			sb.append(n.toString());
+			sb.append("\n <- ");
+		}
+		return sb.toString();
+	}
+	
 	static Map<String, Node> nodes = new HashMap<String, Node>();
 
 	// A*
-
+	
 	static public Node search(Node start) {
-
-		List<Node> openSet = new ArrayList<Node>();
-		openSet.add(start);
+		List<Node> bests = searchAllMain(start, false);
+		if (bests.isEmpty()) {
+			return null;
+		}
+		return bests.get(0);
+	}
+	
+	static public List<Node> searchAll(Node start) {
+		return searchAllMain(start, true);
+	}
+		
+	static List<Node> searchAllMain(Node start, boolean all) {
+		List<Node> bestPaths = new ArrayList<>();
+		
+		PriorityQueue<Node> openQueue = new PriorityQueue<Node>();
+		// Map for quick lookup
+		Map<String, Node> openMap = new HashMap<>();
+		openQueue.add(start);
+		openMap.put(start.getLabel(), start);
+		
 		start.gScore = 0;
 		
-		while (!openSet.isEmpty()) {
-			// Get the lowest f score
-			Collections.sort(openSet, new Comparator<Node>() {
-
-				@Override
-				public int compare(Node o1, Node o2) {
-					int f1 = o1.getF();
-					int f2 = o2.getF();
-					if (f1 < f2) {
-						return -1;
-					} else if (f1 == f2) {
-						return 0;
-					}
-					return 1;
-				}
-			});
-			
-			Node next = openSet.remove(0);
+		Node bestEnd = null;
+		
+		while (!openQueue.isEmpty()) {
+			Node next = openQueue.remove();
 			next.gatherNeighbors();
 			next.computeHScore();
 			
-			logger.info("Searching: "+next+" OpenSet: "+openSet.size());
-			if (start.isEnd(next)) {
-				return next;
+			logger.info("Searching: "+next+" OpenSet: "+openQueue.size());
+			if (next.isEnd()) {
+				logger.info("Found goal: "+next+" g: "+next.gScore);
+				logger.info("Goal path: \n"+next.printBackPath());
+				if (bestEnd == null) {
+					bestEnd = next;
+					bestPaths.add(next);
+				} else if (bestEnd.gScore > next.gScore) {
+					logger.info("Improvement over last goal: "+bestEnd.gScore);
+					bestEnd = next;
+					bestPaths.clear();
+					bestPaths.add(next);
+				} else if (bestEnd.gScore == next.gScore) {
+					logger.info("Equal score to last goal: "+bestEnd.gScore);
+					bestPaths.add(next);
+				}
+				continue;
+			}
+			// If we have a path to the end, but this node is already more expensive, we can stop here
+			if (bestEnd != null && bestEnd.gScore < next.gScore) {
+				logger.info("Pruning path already worse than the best end we found: "+next.gScore);
+				continue;
 			}
 			for (Node n1 : next.neighbors) {
-				int g = next.gScore + start.getCost(n1);
-				logger.info("Neighbor "+n1+" g: "+g);
+				int g = next.gScore + next.getCost(n1);
 				// If the path from next to n1 is better than any other path we've found to n1:
-				if (g <= n1.gScore) {
-					n1.backPath = next;
-					n1.gScore = g;
-					if (!openSet.contains(n1)) {
-						n1.computeHScore();
-						openSet.add(n1);						
-					} else {
-						logger.info("same state");
-					}
+				Node old = openMap.get(n1.getLabel());
+				n1.gScore = g;
+				if (old != null && old.gScore < g) {
+					// Already have a better path (or equal path) to here, can skip
+					logger.info("  Skipping "+n1+" since "+old+" is better");
+					continue;
 				}
+				n1.backPath = next;
+				n1.computeHScore();
+				openQueue.add(n1);
+				openMap.put(n1.getLabel(), n1);
+				logger.info("  Adding Neighbor: "+n1);
 			}
 		}
 		
-		logger.error("Unable to find a path to the end!");
-		return null;
+		return bestPaths;
 	}
 }
