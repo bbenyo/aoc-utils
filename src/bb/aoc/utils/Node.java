@@ -130,31 +130,21 @@ public class Node extends Location implements Comparable<Node> {
 	// Add neighbors based on where we can go from here.
 	// Default implementation assumes a grid, and we can go up/down/left/right
 	public void gatherNeighbors() {
-		int x = getX() - 1;  //left
-		int y = getY();
-		if (x > -1) {
-			Location lup = new Location(x, y);
+		Location lleft = this.moveTo(Direction.LEFT, 1);
+		if (lleft.x > -1) {
+			addNeighbor(lleft);
+		}
+		Location lup = this.moveTo(Direction.UP, 1);
+		if (lup.y > -1) {
 			addNeighbor(lup);
 		}
-		x = getX();
-		y = getY() - 1; //up
-		if (y > -1) {
-			Location lup = new Location(x, y);
-			addNeighbor(lup);
+		Location lright = this.moveTo(Direction.RIGHT, 1);
+		if (lright.x < getGridSizeX()) {
+			addNeighbor(lright);
 		}
-		
-		x = getX() + 1;
-		y = getY(); // right
-		if (x < getGridSizeX()) {
-			Location lup = new Location(x, y);
-			addNeighbor(lup);
-		}
-		
-		x = getX();
-		y = getY() + 1; // down
-		if (y < getGridSizeY()) {
-			Location lup = new Location(x, y);
-			addNeighbor(lup);
+		Location ldown = this.moveTo(Direction.DOWN, 1);
+		if (ldown.y < getGridSizeY()) {
+			addNeighbor(ldown);
 		}			
 	}
 	
@@ -226,7 +216,7 @@ public class Node extends Location implements Comparable<Node> {
 		return sb.toString();
 	}
 	
-	static Map<String, Node> nodes = new HashMap<String, Node>();
+	protected static Map<String, Node> nodes = new HashMap<String, Node>();
 
 	// A*
 	
