@@ -48,10 +48,6 @@ public class Node extends Location implements Comparable<Node> {
 		this.neighbors = neighbors;
 	}
 	
-	public void addNeighbor(Node neighbor) {
-		this.neighbors.add(neighbor);
-	}
-
 	// Heuristic, guess on the risk score for the path to the end
 	//   We'll just do a right/down distance, and assume average risk of 5
 	protected void computeHScore() {
@@ -131,36 +127,47 @@ public class Node extends Location implements Comparable<Node> {
 	// Default implementation assumes a grid, and we can go up/down/left/right
 	public void gatherNeighbors() {
 		Location lleft = this.moveTo(Direction.LEFT, 1);
-		if (lleft.x > -1) {
-			addNeighbor(lleft);
-		}
+		Node nLeft = createNode(lleft);
+		List<Node> pNeighbors = new ArrayList<>();
+		pNeighbors.add(nLeft);
 		Location lup = this.moveTo(Direction.UP, 1);
-		if (lup.y > -1) {
-			addNeighbor(lup);
-		}
+		pNeighbors.add(createNode(lup));
 		Location lright = this.moveTo(Direction.RIGHT, 1);
-		if (lright.x < getGridSizeX()) {
-			addNeighbor(lright);
-		}
+		pNeighbors.add(createNode(lright));
 		Location ldown = this.moveTo(Direction.DOWN, 1);
-		if (ldown.y < getGridSizeY()) {
-			addNeighbor(ldown);
-		}			
+		pNeighbors.add(createNode(ldown));
+		
+		for (Node n : pNeighbors) {
+			if (isValidNode(n)) {
+				addNeighbor(n);
+			}
+		}
+	}
+		
+	// Superclasses to override
+	public boolean isValidNode(Node n) {
+		if (n.getX() > -1 && n.getX() < getGridSizeX() &&
+			n.getY() > -1 && n.getY() < getGridSizeY()) {
+			return true;
+		}
+		return false;
 	}
 	
-	protected void addNeighbor(Location lup) {
-		Node uNode = nodes.get(lup.toString());
+	protected void addNeighbor(Node n) {
+		Node uNode = nodes.get(n.getLabel());
 		if (uNode != null) {
 			neighbors.add(uNode);
 		} else {
-			uNode = createNode(lup);
+			uNode = n;
 			neighbors.add(uNode);
-			nodes.put(lup.toString(), uNode);				
+			nodes.put(n.toString(), uNode);				
 		}
 	}
 	
 	protected Node createNode(Location lup) {
-		return new Node(lup);
+		Node n = new Node(lup);
+		n.gScore = this.gScore + n.localCost;
+		return n;
 	}
 		
 	// Bottom right
@@ -245,12 +252,13 @@ public class Node extends Location implements Comparable<Node> {
 		
 		Node bestEnd = null;
 		
+		long nodesSearched = 0;
+		
 		while (!openQueue.isEmpty()) {
 			Node next = openQueue.remove();
 			next.gatherNeighbors();
-			next.computeHScore();
-			
-			logger.info("Searching: "+next+" OpenSet: "+openQueue.size());
+			nodesSearched++;
+			logger.info("Searching: "+next+" OpenSet: "+openQueue.size()+" Searched: "+nodesSearched);
 			if (next.isEnd()) {
 				logger.info("Found goal: "+next+" g: "+next.gScore);
 				logger.info("Goal path: \n"+next.printBackPath());
@@ -276,9 +284,11 @@ public class Node extends Location implements Comparable<Node> {
 			for (Node n1 : next.neighbors) {
 				int g = next.gScore + next.getCost(n1);
 				// If the path from next to n1 is better than any other path we've found to n1:
-				Node old = openMap.get(n1.getLabel());
 				n1.gScore = g;
-				if (old != null && old.gScore < g) {
+				Node old = openMap.get(n1.getLabel());
+				if (old != null && (old.gScore < g ||
+						(old.gScore == g && !all))) {
+					// We can't prune nodes with equal g, since they may be different paths and we want all paths
 					// Already have a better path (or equal path) to here, can skip
 					logger.info("  Skipping "+n1+" since "+old+" is better");
 					continue;
@@ -291,6 +301,7 @@ public class Node extends Location implements Comparable<Node> {
 			}
 		}
 		
+		logger.info("A* complete, searched "+nodesSearched+" nodes, found "+bestPaths.size()+" best paths");
 		return bestPaths;
 	}
 }
