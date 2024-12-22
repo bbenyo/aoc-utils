@@ -143,9 +143,23 @@ public class Node extends Location implements Comparable<Node> {
 			}
 		}
 	}
+	
+	protected boolean isBackwards(Node n) {
+		if (backPath != null) {
+			if (backPath.getX() == n.getX() &&
+				backPath.getY() == n.getY()) {
+				return true;
+			}
+		}
+		return false;
+	}
 		
 	// Superclasses to override
 	public boolean isValidNode(Node n) {
+		// Don't go backwards
+		if (isBackwards(n)) {
+			return false;
+		}
 		if (n.getX() > -1 && n.getX() < getGridSizeX() &&
 			n.getY() > -1 && n.getY() < getGridSizeY()) {
 			return true;
@@ -225,10 +239,14 @@ public class Node extends Location implements Comparable<Node> {
 	
 	protected static Map<String, Node> nodes = new HashMap<String, Node>();
 
-	// A*
 	
+	// A*
 	static public Node search(Node start) {
-		List<Node> bests = searchAllMain(start, false);
+		return search(start, null);
+	}
+	
+	static public Node search(Node start, Node end) {
+		List<Node> bests = searchAllMain(start, end, false);
 		if (bests.isEmpty()) {
 			return null;
 		}
@@ -236,10 +254,18 @@ public class Node extends Location implements Comparable<Node> {
 	}
 	
 	static public List<Node> searchAll(Node start) {
-		return searchAllMain(start, true);
+		return searchAllMain(start, null, true);
+	}
+	
+	static public boolean isEnd(Node cur, Node end) {
+		if (end != null) {
+			return (end.getX() == cur.getX() &&
+					end.getY() == cur.getY());			
+		}
+		return cur.isEnd();
 	}
 		
-	static List<Node> searchAllMain(Node start, boolean all) {
+	static List<Node> searchAllMain(Node start, Node end, boolean all) {
 		List<Node> bestPaths = new ArrayList<>();
 		
 		PriorityQueue<Node> openQueue = new PriorityQueue<Node>();
@@ -258,8 +284,8 @@ public class Node extends Location implements Comparable<Node> {
 			Node next = openQueue.remove();
 			next.gatherNeighbors();
 			nodesSearched++;
-			logger.info("Searching: "+next+" OpenSet: "+openQueue.size()+" Searched: "+nodesSearched);
-			if (next.isEnd()) {
+			logger.debug("Searching: "+next+" OpenSet: "+openQueue.size()+" Searched: "+nodesSearched);
+			if (isEnd(next, end)) {
 				logger.info("Found goal: "+next+" g: "+next.gScore);
 				logger.info("Goal path: \n"+next.printBackPath());
 				if (bestEnd == null) {
@@ -290,14 +316,14 @@ public class Node extends Location implements Comparable<Node> {
 						(old.gScore == g && !all))) {
 					// We can't prune nodes with equal g, since they may be different paths and we want all paths
 					// Already have a better path (or equal path) to here, can skip
-					logger.info("  Skipping "+n1+" since "+old+" is better");
+					logger.debug("  Skipping "+n1+" since "+old+" is better");
 					continue;
 				}
 				n1.backPath = next;
 				n1.computeHScore();
 				openQueue.add(n1);
 				openMap.put(n1.getLabel(), n1);
-				logger.info("  Adding Neighbor: "+n1);
+				logger.debug("  Adding Neighbor: "+n1);
 			}
 		}
 		

@@ -229,11 +229,11 @@ public class Grid {
 	}
 
 	// Find all neighboring locations with value = c
-	public List<LocationDirection> findNeighbors(char c, Location loc) {
+	public List<LocationDirection> findNeighbors(Character c, Location loc) {
 		return findNeighbors(c, loc, true);
 	}
 	
-	public List<LocationDirection> findNeighbors(char c, Location loc, boolean diagonal) {
+	public List<LocationDirection> findNeighbors(Character c, Location loc, boolean diagonal) {
 		List<LocationDirection> nbrs = new ArrayList<>();
 		for (Direction d : Direction.values()) {
 			if (Direction.isDiagonal(d) && !diagonal) {
@@ -243,7 +243,7 @@ public class Grid {
 			if (nbr.isPresent()) {
 				Location nLoc = nbr.get();
 				Optional<Character> nVal = this.get(nLoc.x, nLoc.y);
-				if (nVal.isPresent() && nVal.get().equals(c)) {
+				if (nVal.isPresent() && (c == null || nVal.get().equals(c))) {
 					nbrs.add(new LocationDirection(nLoc, d));
 				}				
 			}
