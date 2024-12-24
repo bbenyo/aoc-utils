@@ -27,7 +27,7 @@ public class Node extends Location implements Comparable<Node> {
 	protected int localCost = 1;
 	
 	protected Set<Node> neighbors;
-	Node backPath;
+	protected Node backPath;
 		
 	public Node(Location l1) {
 		super(l1.getX(), l1.getY());
@@ -127,15 +127,15 @@ public class Node extends Location implements Comparable<Node> {
 	// Default implementation assumes a grid, and we can go up/down/left/right
 	public void gatherNeighbors() {
 		Location lleft = this.moveTo(Direction.LEFT, 1);
-		Node nLeft = createNode(lleft);
+		Node nLeft = createNode(lleft, Direction.LEFT);
 		List<Node> pNeighbors = new ArrayList<>();
 		pNeighbors.add(nLeft);
 		Location lup = this.moveTo(Direction.UP, 1);
-		pNeighbors.add(createNode(lup));
+		pNeighbors.add(createNode(lup, Direction.UP));
 		Location lright = this.moveTo(Direction.RIGHT, 1);
-		pNeighbors.add(createNode(lright));
+		pNeighbors.add(createNode(lright, Direction.RIGHT));
 		Location ldown = this.moveTo(Direction.DOWN, 1);
-		pNeighbors.add(createNode(ldown));
+		pNeighbors.add(createNode(ldown, Direction.DOWN));
 		
 		for (Node n : pNeighbors) {
 			if (isValidNode(n)) {
@@ -178,12 +178,13 @@ public class Node extends Location implements Comparable<Node> {
 		}
 	}
 	
-	protected Node createNode(Location lup) {
+	// Subclasses may use direction, base version ignores it
+	protected Node createNode(Location lup, Direction d) {
 		Node n = new Node(lup);
 		n.gScore = this.gScore + n.localCost;
 		return n;
 	}
-		
+			
 	// Bottom right
 	public boolean isEnd() {
 		if ((getY() == getGridSizeY() - 1) &&
@@ -239,7 +240,6 @@ public class Node extends Location implements Comparable<Node> {
 	
 	protected static Map<String, Node> nodes = new HashMap<String, Node>();
 
-	
 	// A*
 	static public Node search(Node start) {
 		return search(start, null);
@@ -257,6 +257,10 @@ public class Node extends Location implements Comparable<Node> {
 		return searchAllMain(start, null, true);
 	}
 	
+	static public List<Node> searchAll(Node start, Node end) {
+		return searchAllMain(start, end, true);
+	}
+	
 	static public boolean isEnd(Node cur, Node end) {
 		if (end != null) {
 			return (end.getX() == cur.getX() &&
@@ -266,6 +270,7 @@ public class Node extends Location implements Comparable<Node> {
 	}
 		
 	static List<Node> searchAllMain(Node start, Node end, boolean all) {
+		nodes.clear();
 		List<Node> bestPaths = new ArrayList<>();
 		
 		PriorityQueue<Node> openQueue = new PriorityQueue<Node>();

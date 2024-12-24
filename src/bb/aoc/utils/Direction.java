@@ -99,4 +99,15 @@ public enum Direction {
 			return Optional.empty();
 		}
 	}
+	
+	public static Character toChar(Direction d) {
+		switch(d) {
+		case RIGHT: return '>';
+		case LEFT: return '<';
+		case UP: return '^';
+		case DOWN: return 'v';
+		default:
+			return '?';
+		}
+	}
 }

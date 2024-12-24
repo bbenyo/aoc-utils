@@ -37,7 +37,7 @@ public class GridSearch {
 		}
 		
 		@Override
-		public Node createNode(Location l) {
+		public Node createNode(Location l, Direction d) {
 			return new GridNode(l);
 		}
 		
